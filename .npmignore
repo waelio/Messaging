@@ -1,0 +1,10 @@
+# Environment variables
+.env
+
+# Tests
+/test
+/coverage
+
+# Docker
+docker-compose.yml
+Dockerfile

@@ -1,12 +1,25 @@
 {
-    "name": "messaging",
+    "name": "@waelio/messaging",
     "version": "1.0.0",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/waelio/Messaging.git"
+    },
     "main": "server.js",
     "type": "module",
-    "keywords": [],
-    "author": "",
+    "publishConfig": {
+        "access": "public"
+    },
+    "keywords": [
+        "messaging",
+        "websocket",
+        "real-time",
+        "chat",
+        "express"
+    ],
+    "author": "Waelio",
     "license": "MIT",
-    "description": "",
+    "description": "A real-time messaging application with direct & broadcast messages, user lists, and optional MongoDB persistence.",
     "dependencies": {
         "express": "^4.21.2",
         "ws": "^8.18.3",
