@@ -23,6 +23,15 @@ interface ExtendedWebSocket extends WebSocket {
     roomId: string | null;
 }
 
+interface Message {
+    _id?: any;
+    senderId: string;
+    recipientId?: string;
+    payload: any;
+    isBroadcast: boolean;
+    timestamp: Date;
+}
+
 const DB_HISTORY_LIMIT = 100;
 const IN_MEMORY_HISTORY_LIMIT = 10;
 const DB_NAME = 'messagingApp';
@@ -35,9 +44,10 @@ export class MessagingHub {
      */
     private mongoURI?: string;
     private mongoClient: MongoClient | null;
-    private messagesCollection: Collection | null;
+    private messagesCollection: Collection | any; // Allow mock object
     private clients: Map<string, ExtendedWebSocket> = new Map();
     private wss: WebSocketServer;
+    public ready: Promise<void>;
 
     constructor(httpServer: HttpServer, options: HubOptions = {}) {
         if (!httpServer) {
@@ -46,18 +56,19 @@ export class MessagingHub {
 
         this.mongoURI = options.mongoURI;
         this.mongoClient = this.mongoURI ? new MongoClient(this.mongoURI) : null;
+        this.messagesCollection = null;
         this.wss = new WebSocketServer({ server: httpServer });
 
-        this._initialize();
+        this.ready = this._initialize();
     }
 
-    async _initialize() {
+    private async _initialize(): Promise<void> {
         await this._setupPersistence();
         this.wss.on('connection', (ws: WebSocket, req: IncomingMessage) => this._handleConnection(ws as ExtendedWebSocket, req));
         console.log('[MessagingHub] WebSocket server is attached and running.');
     }
 
-    async _setupPersistence() {
+    private async _setupPersistence() {
         if (this.mongoClient) {
             try {
                 await this.mongoClient.connect();
@@ -75,21 +86,25 @@ export class MessagingHub {
         }
     }
 
-    _setupInMemoryStore() {
-        const inMemoryMessages = [];
+    private _setupInMemoryStore() {
+        const inMemoryMessages: Message[] = [];
         this.messagesCollection = { // Mocking the Collection interface for in-memory operations
-            insertOne: async (message: any) => {
+            insertOne: async (message: Message) => {
+                message._id = uuidv4();
                 inMemoryMessages.push(message);
                 if (inMemoryMessages.length > IN_MEMORY_HISTORY_LIMIT) {
                     inMemoryMessages.shift();
                 }
                 return { acknowledged: true, insertedId: message._id };
             },
-            find: (query: any) => {
-                const orClauses = query.$or;
-                const recipientId = orClauses.find((c: any) => c.recipientId)?.recipientId;
-                const senderId = orClauses.find((c: any) => c.senderId)?.senderId;
-                const filtered = inMemoryMessages.filter(msg => msg.isBroadcast || msg.senderId === senderId || msg.recipientId === recipientId);
+            find: (query: any = {}) => {
+                let filtered = inMemoryMessages;
+                if (query.$or) {
+                    const orClauses = query.$or;
+                    const recipientId = orClauses.find((c: any) => c.recipientId)?.recipientId;
+                    const senderId = orClauses.find((c: any) => c.senderId)?.senderId;
+                    filtered = inMemoryMessages.filter(msg => msg.isBroadcast || msg.senderId === senderId || msg.recipientId === recipientId);
+                }
                 return {
                     sort: () => ({ limit: () => ({ toArray: () => Promise.resolve(filtered) }) })
                 };
@@ -151,7 +166,7 @@ export class MessagingHub {
         }
         this.clients.clear();
 
-        if (this.mongoClient && this.mongoClient.topology && this.mongoClient.topology.isConnected()) {
+        if (this.mongoClient) {
             await this.mongoClient.close();
             console.log('[Database] MongoDB connection closed.');
         }
@@ -197,8 +212,8 @@ export class MessagingHub {
                 const destinationWs = this.clients.get(message.to);
                 if (destinationWs) {
                     const outboundMessage = { type: 'message', from: senderId, payload: message.payload };
-                    const dbMessage = { _id: uuidv4(), senderId, recipientId: message.to, payload: message.payload, isBroadcast: false, timestamp: new Date() };
-                    this.messagesCollection?.insertOne(dbMessage).catch(err => console.error('[Database] Error saving routed message:', err));
+                    const dbMessage: Message = { senderId, recipientId: message.to, payload: message.payload, isBroadcast: false, timestamp: new Date() };
+                    this.messagesCollection?.insertOne(dbMessage).catch((err: any) => console.error('[Database] Error saving routed message:', err));
                     destinationWs.send(JSON.stringify(outboundMessage));
                 } else {
                     ws.send(JSON.stringify({ type: 'error', message: `Client '${message.to}' not found.` }));
@@ -207,8 +222,8 @@ export class MessagingHub {
 
             case 'broadcast':
                 const broadcastMessage = { type: 'message', from: senderId, payload: message.payload, isBroadcast: true };
-                const dbBroadcastMessage = { _id: uuidv4(), senderId, payload: message.payload, isBroadcast: true, timestamp: new Date() };
-                this.messagesCollection?.insertOne(dbBroadcastMessage).catch(err => console.error('[Database] Error saving broadcast message:', err));
+                const dbBroadcastMessage: Message = { senderId, payload: message.payload, isBroadcast: true, timestamp: new Date() };
+                this.messagesCollection?.insertOne(dbBroadcastMessage).catch((err: any) => console.error('[Database] Error saving broadcast message:', err));
                 this._broadcastToOthers(senderId, JSON.stringify(broadcastMessage));
                 break;
 
@@ -217,8 +232,8 @@ export class MessagingHub {
                 const query = { $or: [{ recipientId: senderId }, { senderId: senderId }, { isBroadcast: true }] };
                 const historyLimit = this.mongoClient ? DB_HISTORY_LIMIT : IN_MEMORY_HISTORY_LIMIT;
                 this.messagesCollection?.find(query).sort({ timestamp: 1 }).limit(historyLimit).toArray()
-                    .then(history => ws.send(JSON.stringify({ type: 'message-history', history })))
-                    .catch(err => {
+                    .then((history: any) => ws.send(JSON.stringify({ type: 'message-history', history })))
+                    .catch((err: any) => {
                         console.error(`[Database] Error fetching history for '${senderId}':`, err);
                         ws.send(JSON.stringify({ type: 'error', message: 'Failed to retrieve message history.' }));
                     });

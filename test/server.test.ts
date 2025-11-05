@@ -1,12 +1,12 @@
 import { expect } from 'chai';
 import { WebSocket } from 'ws';
-import { exec } from 'child_process';
+import { exec, ChildProcess } from 'child_process';
 
 // The server is expected to be running on localhost:8080 for these tests.
 const wsUrl = 'ws://localhost:8080';
 
 describe('Messaging Server', () => {
-    let serverProcess;
+    let serverProcess: ChildProcess;
 
     // Before all tests, start the server
     before((done) => {
@@ -30,13 +30,19 @@ describe('Messaging Server', () => {
 
     it('should allow a client to connect and receive a registration success message', (done) => {
         const ws = new WebSocket(wsUrl);
+        let receivedRegisterSuccess = false;
 
         ws.on('message', (data) => {
             const message = JSON.parse(data.toString());
-            expect(message.type).to.equal('register-success');
-            expect(message.id).to.be.a('string');
-            ws.close();
-            done();
+            if (message.type === 'register-success') {
+                expect(message.id).to.be.a('string');
+                receivedRegisterSuccess = true;
+            } else if (message.type === 'user-list' && receivedRegisterSuccess) {
+                ws.close();
+                done();
+            }
         });
+
+        ws.on('error', done);
     });
 });

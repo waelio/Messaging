@@ -25,6 +25,7 @@ async function startServer() {
     // Create an instance of our messaging hub, passing it the server
     // and any configuration options it needs.
     const hub = new MessagingHub(server, { mongoURI: MONGO_URI });
+    await hub.ready;
 
     // Start the HTTP server
     server.listen(PORT, () => {

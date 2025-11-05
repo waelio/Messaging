@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "amd",
+    "lib": ["ES6", "DOM"],
+    "outDir": "public",
+    "rootDir": "src/client",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/client/**/*.ts"]
+}
