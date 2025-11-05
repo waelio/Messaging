@@ -9,10 +9,15 @@
     "description": "",
     "dependencies": {
         "express": "^4.21.2",
-        "ws": "^8.18.3"
+        "ws": "^8.18.3",
+        "mongodb": "^6.8.0",
+        "uuid": "^9.0.1",
+        "dotenv": "^16.4.5"
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "node server.js"
+        "start": "npm install && node server.js",
+        "docker:up": "docker compose up --build -d",
+        "docker:down": "docker compose down"
     }
 }

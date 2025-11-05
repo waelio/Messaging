@@ -1,13 +1,26 @@
 // server.js
 
+import 'dotenv/config';
 import { WebSocketServer } from 'ws';
 import express from 'express';
 import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { MongoClient } from 'mongodb';
+import { v4 as uuidv4 } from 'uuid';
 
 // Use the PORT environment variable provided by Render, with a fallback for local development
 const PORT = process.env.PORT || 8080;
+const DB_HISTORY_LIMIT = 100;
+const IN_MEMORY_HISTORY_LIMIT = 10;
+
+// --- MongoDB Setup ---
+// Use a MongoDB connection string from environment variables.
+const MONGO_URI = process.env.MONGO_URI;
+const DB_NAME = 'messagingApp';
+// The client is only initialized if a URI is provided.
+const mongoClient = MONGO_URI ? new MongoClient(MONGO_URI) : null;
+let messagesCollection;
 
 // --- HTTP Server Setup with Express ---
 const app = express();
@@ -28,16 +41,72 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use(express.static(__dirname));
 
-// Start the HTTP server
-server.listen(PORT, () => {
-    console.log(`[Server] HTTP and WebSocket server started on port ${PORT}`);
-});
+/**
+ * Connects to MongoDB and starts the HTTP server.
+ */
+async function startServer() {
+    if (mongoClient) {
+        try {
+            await mongoClient.connect();
+            console.log('[Database] Connected successfully to MongoDB.');
+            const db = mongoClient.db(DB_NAME);
+            messagesCollection = db.collection('messages');
+        } catch (err) {
+            console.error('[Database] ERROR: Could not connect to MongoDB using the provided MONGO_URI.');
+            console.error('[Database] Please check your connection string and network access rules.');
+            console.error(err);
+            process.exit(1); // Exit if DB was configured but failed to connect.
+        }
+    } else {
+        console.warn('*********************************************************************');
+        console.warn('[Server] WARNING: No MONGO_URI found in .env file.');
+        console.warn('[Server] Running in IN-MEMORY mode. Messages will NOT be persisted.');
+        console.warn('*********************************************************************');
+        
+        // Create a functional in-memory store with a limited size.
+        const inMemoryMessages = [];
+        messagesCollection = {
+            insertOne: (message) => {
+                inMemoryMessages.push(message);
+                // If the array exceeds the limit, remove the oldest message.
+                if (inMemoryMessages.length > IN_MEMORY_HISTORY_LIMIT) {
+                    inMemoryMessages.shift();
+                }
+                return Promise.resolve();
+            },
+            find: (query) => {
+                // The query is { $or: [ { recipientId }, { senderId }, { isBroadcast } ] }
+                const orClauses = query.$or;
+                const recipientId = orClauses[0].recipientId;
+                const senderId = orClauses[1].senderId;
+                const filtered = inMemoryMessages.filter(msg => msg.isBroadcast || msg.senderId === senderId || msg.recipientId === recipientId);
+                return { toArray: () => Promise.resolve(filtered) };
+            }
+        };
+    }
+
+    // Start the server regardless of database connection status
+    server.listen(PORT, () => {
+        console.log(`[Server] HTTP and WebSocket server started on port ${PORT}`);
+    });
+}
 
 // --- WebSocket Server Event Handlers ---
 
 wss.on('connection', (ws, req) => {
+    // --- Server-Side ID Assignment ---
+    const clientId = uuidv4();
     const clientIp = req.socket.remoteAddress;
-    console.log(`[Server] New client connected from ${clientIp}`);
+    console.log(`[Server] New client connected from ${clientIp}, assigned ID: ${clientId}`);
+
+    // Immediately attach the ID and register the client
+    ws.clientId = clientId;
+    clients.set(clientId, ws);
+
+    // Inform the client of their new ID
+    ws.send(JSON.stringify({ type: 'register-success', id: clientId }));
+
+    broadcastClientList();
 
     // 1. Handle incoming messages from this client
     ws.on('message', (message) => {
@@ -58,6 +127,7 @@ wss.on('connection', (ws, req) => {
             clients.delete(clientId);
             console.log(`[Server] Client '${clientId}' disconnected.`);
             // Notify all other clients that this user has disconnected
+            // Also close the database connection if no clients are left (optional)
             broadcastClientList();
         }
     });
@@ -67,6 +137,33 @@ wss.on('connection', (ws, req) => {
         console.error('[Server] WebSocket error:', error);
     });
 });
+
+/**
+ * Handles graceful shutdown of the server.
+ */
+async function shutdown() {
+    console.log('[Server] Shutting down gracefully...');
+
+    // 1. Close all client connections
+    const shutdownMessage = JSON.stringify({ type: 'info', message: 'Server is shutting down.' });
+    for (const clientWs of clients.values()) {
+        clientWs.send(shutdownMessage, () => clientWs.close(1000, 'Server Shutdown'));
+    }
+    clients.clear();
+
+    // 2. Close the database connection
+    if (mongoClient && mongoClient.topology && mongoClient.topology.isConnected()) {
+        await mongoClient.close();
+        console.log('[Database] MongoDB connection closed.');
+    }
+
+    // 3. Close the servers
+    wss.close(() => console.log('[Server] WebSocket server closed.'));
+    server.close(() => {
+        console.log('[Server] HTTP server closed.');
+        process.exit(0);
+    });
+}
 
 /**
  * Broadcasts the current list of connected client IDs to everyone.
@@ -93,21 +190,6 @@ function handleClientMessage(ws, message) {
     console.log('[Server] Received message:', message);
 
     switch (message.type) {
-        case 'register':
-            // Register the client with its unique ID
-            const clientId = message.id;
-            if (!clientId) {
-                ws.send(JSON.stringify({ type: 'error', message: 'Registration failed: ID is required.' }));
-                return;
-            }
-            ws.clientId = clientId; // Attach the ID directly to the WebSocket object
-            clients.set(clientId, ws);
-            console.log(`[Server] Client registered with ID: ${clientId}`);
-            ws.send(JSON.stringify({ type: 'info', message: `Successfully registered as '${clientId}'.` }));
-            // Announce the new user to everyone
-            broadcastClientList();
-            break;
-
         case 'route':
             // Route a message to a specific destination client
             const destinationId = message.to;
@@ -121,6 +203,20 @@ function handleClientMessage(ws, message) {
                     from: senderId || 'unknown',
                     payload: message.payload
                 };
+
+                // Persist the routed message to the database
+                const dbMessage = {
+                    _id: uuidv4(),
+                    senderId: senderId,
+                    recipientId: destinationId,
+                    payload: message.payload,
+                    isBroadcast: false,
+                    timestamp: new Date()
+                };
+                messagesCollection.insertOne(dbMessage).catch(err => {
+                    console.error('[Database] Error saving routed message:', err);
+                });
+
                 destinationWs.send(JSON.stringify(outboundMessage));
                 console.log(`[Server] Routed message from '${senderId}' to '${destinationId}'.`);
             } else {
@@ -140,6 +236,19 @@ function handleClientMessage(ws, message) {
             };
             const broadcastString = JSON.stringify(broadcastMessage);
 
+            // Persist the broadcast message to the database
+            const dbBroadcastMessage = {
+                _id: uuidv4(),
+                senderId: broadcastSenderId,
+                payload: message.payload,
+                isBroadcast: true,
+                timestamp: new Date()
+            };
+            messagesCollection.insertOne(dbBroadcastMessage).catch(err => {
+                console.error('[Database] Error saving broadcast message:', err);
+            });
+
+
             console.log(`[Server] Broadcasting message from '${broadcastSenderId}'.`);
             // Iterate over all connected clients and send the message
             for (const [id, clientWs] of clients.entries()) {
@@ -150,8 +259,47 @@ function handleClientMessage(ws, message) {
             }
             break;
 
+        case 'get-history':
+            const requesterId = ws.clientId;
+            if (!requesterId) {
+                ws.send(JSON.stringify({ type: 'error', message: 'Cannot get history: client is not registered.' }));
+                return;
+            }
+
+            console.log(`[Server] Fetching message history for '${requesterId}'.`);
+
+            // Query for messages sent to the user, from the user, or broadcast to everyone.
+            const query = {
+                $or: [
+                    { recipientId: requesterId },
+                    { senderId: requesterId },
+                    { isBroadcast: true }
+                ]
+            };
+
+            // Use the appropriate limit based on whether a DB is connected.
+            const historyLimit = mongoClient ? DB_HISTORY_LIMIT : IN_MEMORY_HISTORY_LIMIT;
+
+            messagesCollection.find(query).sort({ timestamp: 1 }).limit(historyLimit).toArray()
+                .then(history => {
+                    ws.send(JSON.stringify({
+                        type: 'message-history',
+                        history: history
+                    }));
+                })
+                .catch(err => {
+                    console.error(`[Database] Error fetching history for '${requesterId}':`, err);
+                    ws.send(JSON.stringify({ type: 'error', message: 'Failed to retrieve message history.' }));
+                });
+            break;
+
         default:
             console.warn(`[Server] Unknown message type: ${message.type}`);
             ws.send(JSON.stringify({ type: 'error', message: `Unknown message type: '${message.type}'.` }));
     }
 }
+
+// --- Initialize Server ---
+startServer();
+process.on('SIGINT', shutdown); // Catches Ctrl+C
+process.on('SIGTERM', shutdown); // Catches kill signals

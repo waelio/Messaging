@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/messagingApp
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017" # Expose DB on host port 27017 to connect to container port 27017
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

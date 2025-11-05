@@ -3,80 +3,189 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WebSocket Bridge Client</title>
+    <title>Real-Time Messaging</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
     <style>
+      :root {
+        --bg-color: #f0f2f5;
+        --primary-color: #007bff;
+        --primary-hover: #0056b3;
+        --text-color: #333;
+        --light-text: #f8f9fa;
+        --border-color: #dee2e6;
+        --container-bg: #ffffff;
+        --log-bg: #f8f9fa;
+        --sent-bg: #dcf8c6;
+        --received-bg: #ffffff;
+        --status-color: #6c757d;
+        --error-color: #dc3545;
+      }
       body {
-        font-family: sans-serif;
+        font-family: "Roboto", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        height: calc(100vh - 40px);
+      }
+      .main-container {
+        display: flex;
+        gap: 20px;
+        width: 100%;
+        max-width: 1200px;
+        height: 100%;
+      }
+      .chat-container,
+      .sidebar-container {
+        background-color: var(--container-bg);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         display: flex;
         flex-direction: column;
-        max-width: 800px;
-        margin: auto;
+      }
+      .chat-container {
+        flex-grow: 1;
+        height: 100%;
+      }
+      .sidebar-container {
+        flex-basis: 300px;
+        flex-shrink: 0;
         padding: 20px;
       }
-      .control-group,
-      .message-group {
-        border: 1px solid #ccc;
-        padding: 15px;
-        margin-bottom: 15px;
-        border-radius: 5px;
+      h1,
+      h2 {
+        margin-top: 0;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+        font-weight: 500;
+      }
+      .connection-controls,
+      .message-controls {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .message-controls {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 10px;
+        align-items: center;
+      }
+      #messageText {
+        grid-column: 1 / -1;
       }
       input {
-        width: calc(100% - 10px);
-        padding: 5px;
-        margin-bottom: 10px;
+        padding: 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 1rem;
       }
       button {
-        padding: 8px 15px;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        background-color: var(--primary-color);
+        color: var(--light-text);
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      button:hover {
+        background-color: var(--primary-hover);
+      }
+      button:disabled {
+        background-color: #a0c7ff;
+        cursor: not-allowed;
       }
       #log {
-        background-color: #f4f4f4;
-        border: 1px solid #ddd;
-        height: 300px;
+        background-color: var(--log-bg);
         overflow-y: scroll;
         padding: 10px;
-        white-space: pre-wrap;
+        flex-grow: 1;
       }
-      .status {
-        font-style: italic;
-        color: #888;
+      #log p {
+        margin: 0 0 10px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        max-width: 80%;
+        word-wrap: break-word;
+      }
+      #log .sent {
+        background-color: var(--sent-bg);
+        align-self: flex-end;
+        margin-left: auto;
+      }
+      #log .received {
+        background-color: var(--received-bg);
+        border: 1px solid var(--border-color);
+      }
+      #log .status {
+        color: var(--status-color);
+        text-align: center;
+        background: none;
+        max-width: 100%;
+      }
+      #log .error {
+        color: var(--error-color);
+        text-align: center;
+        background: none;
+        font-weight: bold;
+        max-width: 100%;
+      }
+      #userList {
+        list-style-type: none;
+        padding: 0;
+      }
+      #userList li {
+        padding: 5px 0;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      #userList .me {
+        font-weight: bold;
+        color: var(--primary-color);
       }
     </style>
   </head>
   <body>
-    <h1>WebSocket Bridge Client</h1>
-
-    <div class="control-group">
-      <h2>Connection</h2>
-      <label for="clientId">Your Client ID:</label>
-      <input type="text" id="clientId" placeholder="e.g., web-client-1" />
-      <button id="connectBtn">Connect & Register</button>
-      <p>Status: <span id="status">Disconnected</span></p>
+    <div class="main-container">
+      <div class="chat-container">
+        <div class="connection-controls">
+          <h1>Real-Time Messaging</h1>
+          <button id="connectBtn">Connect</button>
+          <span>Status: <span id="status">Disconnected</span></span>
+        </div>
+        <div id="log"></div>
+        <div class="message-controls">
+          <input
+            type="text"
+            id="destinationId"
+            placeholder="Destination ID (for direct message)"
+          />
+          <input
+            type="text"
+            id="messageText"
+            placeholder="Type your message..."
+          />
+          <button id="sendBtn" disabled>Send Direct</button>
+          <button id="broadcastBtn" disabled>Broadcast</button>
+        </div>
+      </div>
+      <div class="sidebar-container">
+        <h2>Connected Users</h2>
+        <ul id="userList">
+          <!-- User list will be populated by JavaScript -->
+        </ul>
+      </div>
     </div>
-
-    <div class="message-group">
-      <h2>Send Message</h2>
-      <label for="destinationId">Destination Client ID:</label>
-      <input
-        type="text"
-        id="destinationId"
-        placeholder="e.g., source-service"
-      />
-
-      <label for="messageText">Message:</label>
-      <input
-        type="text"
-        id="messageText"
-        placeholder="Type your message here"
-      />
-
-      <button id="sendBtn" disabled>Send</button>
-    </div>
-
-    <div class="log-group">
-      <h2>Log</h2>
-      <div id="log"></div>
-    </div>
-
     <script src="/app.js"></script>
   </body>
 </html>
