@@ -67,6 +67,19 @@
         padding-bottom: 10px;
         font-weight: 500;
       }
+      #clientIdContainer {
+        display: none; /* Hidden by default */
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 5px;
+      }
+      #clientIdContainer input {
+        flex-grow: 1;
+        margin-right: 10px;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+      }
       .connection-controls,
       .message-controls {
         padding: 20px;
@@ -162,6 +175,11 @@
           <h1>Real-Time Messaging</h1>
           <button id="connectBtn">Connect</button>
           <span>Status: <span id="status">Disconnected</span></span>
+          <div id="clientIdContainer">
+            <label for="clientIdInput">Your ID:</label>
+            <input type="text" id="clientIdInput" readonly />
+            <button id="copyIdBtn">Copy</button>
+          </div>
         </div>
         <div id="log"></div>
         <div class="message-controls">
