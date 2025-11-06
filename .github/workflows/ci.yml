@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - 27017:27017
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Wait for MongoDB
+        run: |
+          for i in {1..20}; do
+            (echo > /dev/tcp/127.0.0.1/27017) && echo "MongoDB is up" && exit 0
+            echo "Waiting for MongoDB..."
+            sleep 1
+          done
+          echo "MongoDB did not become ready in time" >&2
+          exit 1
+
+      - name: Run integration tests
+        env:
+          RUN_INTEGRATION: "true"
+          MONGO_URI: mongodb://127.0.0.1:27017/messagingApp
+        run: npm run test:server
