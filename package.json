@@ -47,6 +47,7 @@
     "scripts": {
         "clean": "rm -rf dist public",
         "test": "mocha",
+        "test:server": "mocha test/server.test.ts",
         "build": "npm run clean && tsc -p tsconfig.json && tsc -p tsconfig.client.json && npm run copy-files",
         "copy-files": "cp src/client/index.html public/index.html",
         "start": "node dist/server.js",
