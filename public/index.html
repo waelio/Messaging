@@ -134,14 +134,17 @@
                   });
                   break;
                 case "user-list":
-                  users.value = msg.users.filter((u) => u !== clientId.value);
+                  users.value = msg.users;
+                  const othersCount = msg.users.filter(
+                    (u) => u !== clientId.value
+                  ).length;
                   notify({
                     color: "info",
                     message: "User list updated",
                     caption:
-                      users.value.length +
+                      othersCount +
                       " other" +
-                      (users.value.length === 1 ? " user" : " users"),
+                      (othersCount === 1 ? " user" : " users"),
                   });
                   break;
                 case "message":
@@ -356,12 +359,13 @@
               <div class="column col-auto q-pa-sm" style="width:260px;max-width:100%;">
                 <q-card flat bordered class="full-height">
                   <q-card-section class="q-pb-xs"><div class="text-caption text-grey">Users Online</div></q-card-section>
-                  <q-separator />
                   <q-list dense bordered separator style="max-height:40vh;overflow:auto;">
-                    <q-item v-for="u in users" :key="u" clickable @click="chooseUser(u)" :active="selectedUser===u" active-class="bg-primary text-white">
-                      <q-item-section>{{ u.substring(0,8) }}</q-item-section>
+                    <q-item v-for="u in users" :key="u" clickable @click="u!==clientId && chooseUser(u)" :active="selectedUser===u" :disable="u===clientId" active-class="bg-primary text-white">
+                      <q-item-section>
+                        {{ u.substring(0,8) }}<span v-if="u===clientId" class="text-primary text-caption"> (you)</span>
+                      </q-item-section>
                     </q-item>
-                    <q-item v-if="!users.length"><q-item-section class="text-grey">No other users</q-item-section></q-item>
+                    <q-item v-if="!users.length"><q-item-section class="text-grey">No users</q-item-section></q-item>
                   </q-list>
                   <q-separator />
                   <q-card-section>
