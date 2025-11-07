@@ -54,6 +54,11 @@
         "start": "node dist/server.js",
         "dev": "node --loader ts-node/esm src/server.ts",
         "docker:up": "docker compose up --build -d",
-        "docker:down": "docker compose down"
+        "docker:down": "docker compose down",
+        "release:verify": "npm test && npm run build",
+        "release:patch": "npm run release:verify && npm version patch -m 'chore(release): %s' && git push --follow-tags",
+        "release:minor": "npm run release:verify && npm version minor -m 'chore(release): %s' && git push --follow-tags",
+        "release:major": "npm run release:verify && npm version major -m 'chore(release): %s' && git push --follow-tags",
+        "release:publish": "npm publish --access public"
     }
 }
