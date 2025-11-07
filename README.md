@@ -92,9 +92,29 @@ http://localhost:8080
 
 Notes:
 
-- The UI is a single HTML page powered by Vue 3 + Quasar via CDN, served from `public/`.
-- Open two tabs/windows to see users appear and messages flow in real-time.
-- Dev mode runs a TypeScript server only; the browser receives plain HTML/JS.
+## Live Demo
+
+> GitHub strips iframes in README display for security. The embed below may not render on GitHub, but will appear on platforms that permit inline frames (e.g. some internal viewers or npm). Always provide a direct link fallback.
+
+<div align="center">
+  <a href="https://waelio-messaging.onrender.com/" target="_blank" rel="noopener">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://waelio-messaging.onrender.com/favicon.svg">
+      <img alt="Messaging Hub Live Demo" src="https://waelio-messaging.onrender.com/favicon.svg" width="96" height="96" style="margin-bottom:12px;" />
+    </picture>
+  </a>
+  <p><strong><a href="https://waelio-messaging.onrender.com/" target="_blank" rel="noopener">Open Live Demo</a></strong></p>
+  <!-- Attempt inline preview (ignored by GitHub) -->
+  <iframe
+    src="https://waelio-messaging.onrender.com/"
+    title="Messaging Hub Live Demo"
+    width="100%"
+    height="640"
+    style="border:1px solid #ddd;border-radius:8px;max-width:960px;"
+    loading="lazy"
+  ></iframe>
+  <p><em>If you don't see an embedded preview, use the link above.</em></p>
+</div>
 
 ## Optional: Adding Database Persistence
 
@@ -121,14 +141,14 @@ Now, when you run `npm start`, the server will automatically detect the `.env` f
   npm run build
   npm start
   ```
- - Release (local):
-   - patch: `npm run release:patch && npm run release:publish`
-   - minor: `npm run release:minor && npm run release:publish`
-   - major: `npm run release:major && npm run release:publish`
- - Release (CI workflow_dispatch):
-   1. Go to GitHub → Actions → Release → Run workflow
-   2. Choose bump type (patch/minor/major)
-   3. The workflow will: install, test, build, bump version, push tag, and publish to npm
+- Release (local):
+  - patch: `npm run release:patch && npm run release:publish`
+  - minor: `npm run release:minor && npm run release:publish`
+  - major: `npm run release:major && npm run release:publish`
+- Release (CI workflow_dispatch):
+  1.  Go to GitHub → Actions → Release → Run workflow
+  2.  Choose bump type (patch/minor/major)
+  3.  The workflow will: install, test, build, bump version, push tag, and publish to npm
 - Open in browser:
   ```
   http://localhost:8080
@@ -140,7 +160,7 @@ Now, when you run `npm start`, the server will automatically detect the `.env` f
 
 Two ways to publish:
 
-1) Local via npm scripts
+1. Local via npm scripts
 
 ```
 # patch
@@ -153,7 +173,7 @@ npm run release:minor && npm run release:publish
 npm run release:major && npm run release:publish
 ```
 
-2) GitHub Actions workflow
+2. GitHub Actions workflow
 
 - Workflow file: `.github/workflows/release.yml`
 - Trigger: Actions → Release → Run workflow, choose bump type
