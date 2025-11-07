@@ -66,25 +66,34 @@ If you want to run the demo application included in this repository:
 1.  **Clone the repository and install dependencies:**
 
     ```bash
-    git clone https://github.com/waelio/Messaging.git
-    cd Messaging
+  git clone https://github.com/waelio/waelio-messaging.git
+  cd waelio-messaging
     npm install
     ```
 
 2.  **Run the server:**
-    - **For development:** This command uses `ts-node` to run the TypeScript code directly.
+    - **For development:** Runs the TypeScript server with Node’s ESM loader for ts-node.
       ```bash
       npm run dev
       ```
-    - **For production:** First, build the JavaScript files from the TypeScript source, then start the server.
+    - **For production:** First compile TypeScript, then run the compiled server.
       ```bash
       npm run build
       npm start
       ```
 
-## Accessing the Client
+## Accessing the Client UI (Quasar)
 
-    Open a web browser and navigate to `http://localhost:8080`.
+Open your browser at:
+
+```
+http://localhost:8080
+```
+
+Notes:
+- The UI is a single HTML page powered by Vue 3 + Quasar via CDN, served from `public/`.
+- Open two tabs/windows to see users appear and messages flow in real-time.
+- Dev mode runs a TypeScript server only; the browser receives plain HTML/JS.
 
 ## Optional: Adding Database Persistence
 
@@ -97,6 +106,24 @@ If you like the application and want to save message history permanently, you ca
 3.  **Add your connection string**: Copy the `MONGO_URI` line from `.env.example` into your new `.env` file and replace the placeholder with your actual connection string.
 
 Now, when you run `npm start`, the server will automatically detect the `.env` file, connect to the database, and store a history of the last 100 messages.
+
+---
+
+## Quick Reference
+
+- Start (dev):
+  ```bash
+  npm run dev
+  ```
+- Build and run (prod):
+  ```bash
+  npm run build
+  npm start
+  ```
+- Open in browser:
+  ```
+  http://localhost:8080
+  ```
 
 ---
 
