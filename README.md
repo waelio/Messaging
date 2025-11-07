@@ -1,5 +1,10 @@
 # waelio-messaging
 
+[![npm version](https://img.shields.io/npm/v/%40waelio%2Fmessaging?logo=npm)](https://www.npmjs.com/package/@waelio/messaging)
+[![npm downloads](https://img.shields.io/npm/dm/%40waelio%2Fmessaging?logo=npm)](https://www.npmjs.com/package/@waelio/messaging)
+[![CI](https://github.com/waelio/waelio-messaging/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/waelio/waelio-messaging/actions/workflows/ci.yml)
+[![license](https://img.shields.io/github/license/waelio/waelio-messaging)](LICENSE)
+
 Minimal real-time WebSocket messaging hub: direct, broadcast, user list, history, optional Mongo persistence, typed API.
 
 Live Demo: https://waelio-messaging.onrender.com/
