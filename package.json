@@ -3,7 +3,7 @@
     "version": "2.1.0",
     "repository": {
         "type": "git",
-        "url": "https://github.com/waelio/waelio-messaging.git"
+        "url": "git+https://github.com/waelio/waelio-messaging.git"
     },
     "main": "dist/MessagingHub.js",
     "types": "dist/MessagingHub.d.ts",
