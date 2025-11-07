@@ -126,6 +126,8 @@ export class MessagingHub {
 
         ws.send(JSON.stringify({ type: 'register-success', id: clientId }));
         this._broadcastClientList();
+        // Notify other clients a user joined (no persistence, lightweight system event)
+        this._broadcastToOthers(clientId, JSON.stringify({ type: 'user-joined', id: clientId, ts: Date.now() }));
         // Track connected clients count via uStore (in-memory)
         try { uStore.memory.set('connectedClients', this.clients.size); } catch { }
 
@@ -150,6 +152,8 @@ export class MessagingHub {
         this.clients.delete(clientId);
         console.log(`[MessagingHub] Client '${clientId}' disconnected.`);
         this._broadcastClientList();
+        // Notify others this user left
+        this._broadcastToOthers(clientId, JSON.stringify({ type: 'user-left', id: clientId, ts: Date.now() }));
         // Update connected clients metric
         try { uStore.memory.set('connectedClients', this.clients.size); } catch { }
 

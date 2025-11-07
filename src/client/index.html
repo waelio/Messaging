@@ -266,6 +266,20 @@
                     caption: msg.history.length + " messages",
                   });
                   break;
+                case "user-joined":
+                  notify({
+                    color: "positive",
+                    message: "User joined",
+                    caption: (msg.id || "").substring(0, 8),
+                  });
+                  break;
+                case "user-left":
+                  notify({
+                    color: "warning",
+                    message: "User left",
+                    caption: (msg.id || "").substring(0, 8),
+                  });
+                  break;
                 case "user-typing":
                   typingUsers.value.add(msg.id);
                   break;
