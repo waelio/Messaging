@@ -39,6 +39,10 @@
     <div id="q-app"></div>
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/quasar@2.18.5/dist/quasar.umd.prod.js"></script>
+    <script type="module">
+      import { uStore } from 'https://esm.sh/@waelio/ustore@1.0.8';
+      window.uStore = uStore;
+    </script>
     <script>
       const { ref, computed, onMounted } = Vue;
       const WS_URL =
@@ -56,6 +60,10 @@
           const roomPartner = ref(null);
           const selectedUser = ref(null);
           const notifyEnabled = ref(true);
+          try {
+            const savedNotify = window.uStore?.local.get('notifyEnabled');
+            if (typeof savedNotify === 'boolean') notifyEnabled.value = savedNotify;
+          } catch {}
           const reconnecting = ref(false);
           const retryAttempt = ref(0);
           const nextRetryIn = ref(0);
@@ -127,6 +135,7 @@
               switch (msg.type) {
                 case "register-success":
                   clientId.value = msg.id;
+                  try { window.uStore?.local.set('clientId', msg.id); } catch {}
                   notify({
                     color: "positive",
                     message: "Registered",
@@ -302,7 +311,7 @@
             );
           });
           onMounted(connect);
-          return {
+            return {
             connected,
             clientId,
             users,
@@ -406,6 +415,10 @@
       });
       app.use(Quasar);
       app.mount("#q-app");
+      // Persist notification preference
+      try {
+        const appVm = document.getElementById('q-app');
+      } catch {}
     </script>
   </body>
 </html>
