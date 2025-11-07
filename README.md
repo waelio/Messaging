@@ -18,6 +18,15 @@ npm run build     # compile TypeScript
 npm start         # run compiled server
 ```
 
+## PWA (Installable Client)
+
+The bundled UI under `public/` is a Progressive Web App:
+
+- Installable on desktop and mobile (manifest + service worker)
+- Basic offline support (core assets cached, navigation fallback)
+
+Try it on the Live Demo or locally after `npm run build && npm start`.
+
 ## Library Usage
 
 ```ts
