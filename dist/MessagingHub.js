@@ -1,6 +1,7 @@
 import { WebSocketServer } from 'ws';
 import { MongoClient } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
+import { uStore } from '@waelio/ustore';
 const DB_HISTORY_LIMIT = 100;
 const IN_MEMORY_HISTORY_LIMIT = 10;
 const DB_NAME = 'messagingApp';
@@ -86,6 +87,11 @@ export class MessagingHub {
         ws.roomId = null;
         ws.send(JSON.stringify({ type: 'register-success', id: clientId }));
         this._broadcastClientList();
+        // Track connected clients count via uStore (in-memory)
+        try {
+            uStore.memory.set('connectedClients', this.clients.size);
+        }
+        catch { }
         ws.on('message', (message) => {
             try {
                 const parsedMessage = JSON.parse(message.toString());
@@ -106,6 +112,11 @@ export class MessagingHub {
         this.clients.delete(clientId);
         console.log(`[MessagingHub] Client '${clientId}' disconnected.`);
         this._broadcastClientList();
+        // Update connected clients metric
+        try {
+            uStore.memory.set('connectedClients', this.clients.size);
+        }
+        catch { }
         if (ws.roomId) {
             const otherParticipant = this._findOtherParticipant(ws.clientId, ws.roomId);
             if (otherParticipant) {
