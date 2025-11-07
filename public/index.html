@@ -442,7 +442,11 @@
                 <q-card flat bordered class="column full-height">
                   <q-card-section class="col scroll" style="overflow:auto;display:flex;flex-direction:column;gap:8px;">
                     <div v-for="m in messages" :key="m.ts.getTime()+m.payload" class="message-item" :class="{ me:m.me, broadcast:m.isBroadcast }">
-                      <q-chat-message :sent="m.me" :text="[m.payload]" :bg-color="m.isBroadcast ? 'accent' : (m.me ? 'primary' : colorFor(m.from))" text-color="white" :stamp="m.ts.toLocaleTimeString()" />
+                      <q-chat-message :sent="m.me" :text="[m.payload]" :bg-color="m.isBroadcast ? 'accent' : (m.me ? 'primary' : 'secondary')" text-color="white" :stamp="m.ts.toLocaleTimeString()" :name="m.me ? 'You' : m.from.substring(0,8)">
+                        <template v-slot:avatar>
+                          <q-avatar :color="m.isBroadcast ? 'accent' : (m.me ? 'primary' : colorFor(m.from))" text-color="white" size="32px">{{ m.isBroadcast ? '★' : m.me ? 'Y' : m.from.substring(0,2) }}</q-avatar>
+                        </template>
+                      </q-chat-message>
                     </div>
                   </q-card-section>
                   <q-separator />
