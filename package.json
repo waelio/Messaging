@@ -51,7 +51,7 @@
         "build": "npm run clean && tsc -p tsconfig.json && tsc -p tsconfig.client.json && npm run copy-files",
         "copy-files": "cp src/client/index.html public/index.html",
         "start": "node dist/server.js",
-        "dev": "ts-node src/server.ts",
+        "dev": "node --loader ts-node/esm src/server.ts",
         "docker:up": "docker compose up --build -d",
         "docker:down": "docker compose down"
     }
