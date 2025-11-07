@@ -66,8 +66,8 @@ If you want to run the demo application included in this repository:
 1.  **Clone the repository and install dependencies:**
 
     ```bash
-  git clone https://github.com/waelio/waelio-messaging.git
-  cd waelio-messaging
+    git clone https://github.com/waelio/waelio-messaging.git
+    cd waelio-messaging
     npm install
     ```
 
@@ -91,6 +91,7 @@ http://localhost:8080
 ```
 
 Notes:
+
 - The UI is a single HTML page powered by Vue 3 + Quasar via CDN, served from `public/`.
 - Open two tabs/windows to see users appear and messages flow in real-time.
 - Dev mode runs a TypeScript server only; the browser receives plain HTML/JS.
