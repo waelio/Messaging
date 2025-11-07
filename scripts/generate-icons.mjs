@@ -48,15 +48,22 @@ async function main() {
   } catch (e) {
     console.warn('[icons] ICO generation failed:', e.message);
   }
-  // Web manifest
+  // Web manifest (enhanced for installability)
+  const pngIcons = [16, 32, 48, 64, 180].map(sz => ({
+    src: sz === 180 ? 'apple-touch-icon.png' : `favicon-${sz}x${sz}.png`,
+    sizes: `${sz}x${sz}`,
+    type: 'image/png'
+  }));
   const manifest = {
     name: 'Messaging Hub',
     short_name: 'Messaging',
-    icons: [16,32,48,64,180].map(sz => ({
-      src: sz === 180 ? 'apple-touch-icon.png' : `favicon-${sz}x${sz}.png`,
-      sizes: `${sz}x${sz}`,
-      type: 'image/png'
-    })),
+    id: '/',
+    start_url: '/',
+    scope: '/',
+    icons: [
+      { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
+      ...pngIcons
+    ],
     theme_color: '#1976D2',
     background_color: '#FFFFFF',
     display: 'standalone'
