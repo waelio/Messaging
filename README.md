@@ -121,12 +121,44 @@ Now, when you run `npm start`, the server will automatically detect the `.env` f
   npm run build
   npm start
   ```
+ - Release (local):
+   - patch: `npm run release:patch && npm run release:publish`
+   - minor: `npm run release:minor && npm run release:publish`
+   - major: `npm run release:major && npm run release:publish`
+ - Release (CI workflow_dispatch):
+   1. Go to GitHub → Actions → Release → Run workflow
+   2. Choose bump type (patch/minor/major)
+   3. The workflow will: install, test, build, bump version, push tag, and publish to npm
 - Open in browser:
   ```
   http://localhost:8080
   ```
 
 ---
+
+## Release Automation
+
+Two ways to publish:
+
+1) Local via npm scripts
+
+```
+# patch
+npm run release:patch && npm run release:publish
+
+# minor
+npm run release:minor && npm run release:publish
+
+# major
+npm run release:major && npm run release:publish
+```
+
+2) GitHub Actions workflow
+
+- Workflow file: `.github/workflows/release.yml`
+- Trigger: Actions → Release → Run workflow, choose bump type
+- Requirements: set `NPM_TOKEN` secret in the repo
+- Steps performed: test → build → version bump → push tags → publish
 
 ## Alternative: Running with Docker
 
