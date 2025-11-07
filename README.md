@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/%40waelio%2Fmessaging?logo=npm)](https://www.npmjs.com/package/@waelio/messaging)
 [![npm downloads](https://img.shields.io/npm/dm/%40waelio%2Fmessaging?logo=npm)](https://www.npmjs.com/package/@waelio/messaging)
 [![CI](https://github.com/waelio/waelio-messaging/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/waelio/waelio-messaging/actions/workflows/ci.yml)
-[![license](https://img.shields.io/github/license/waelio/waelio-messaging)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Minimal real-time WebSocket messaging hub: direct, broadcast, user list, history, optional Mongo persistence, typed API.
 
@@ -125,26 +125,4 @@ npm run release:major && npm run release:publish
 
 ## License
 
-MIT License
-
-Copyright (c) 2025 Waelio
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-See LICENSE file for the authoritative text.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
